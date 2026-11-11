@@ -95,7 +95,7 @@ const ALL=["Português","Matemática","História","Geografia","Ciências","Biolo
 const $=id=>document.getElementById(id);
 const ld=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-let cfg=Object.assign({key:"",model:"gemini-flash-latest",lvl:2,subs:["Português","Matemática","História","Biologia"]},ld("el_cfg",{}));
+let cfg=Object.assign({key:"",model:"gemini-3.8-flash",lvl:2,subs:["Português","Matemática","História","Biologia"]},ld("el_cfg",{}));
 let hist=ld("el_hist",[]);let img=null;
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function md(t){const L=esc(t).split("\n");let h="",ul=false;for(const l of L){const m=l.match(/^\s*[-*•]\s+(.*)/);const x=(m?m[1]:l).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");if(m){if(!ul){h+="<ul>";ul=true}h+="<li>"+x+"</li>"}else{if(ul){h+="</ul>";ul=false}if(x.trim())h+="<p>"+x+"</p>"}}return h+(ul?"</ul>":"")}
@@ -111,7 +111,7 @@ function drawSettings(){
 function save(){sv("el_cfg",cfg)}
 $("lvl").onchange=e=>{cfg.lvl=+e.target.value;save()};
 $("key").onchange=e=>{cfg.key=e.target.value.trim();save()};
-$("mdl").onchange=e=>{cfg.model=e.target.value.trim()||"gemini-flash-latest";save()};
+$("mdl").onchange=e=>{cfg.model=e.target.value.trim()||"gemini-3.8-flash";save()};
 $("clr").onclick=()=>{if(confirm("Apagar todo o histórico?")){hist=[];sv("el_hist",hist);drawHist()}};
 $("pbtn").onclick=()=>$("file").click();
 $("pclr").onclick=()=>{img=null;$("prev").style.display="none";$("pclr").hidden=true;$("file").value=""};
@@ -131,15 +131,15 @@ Explique em português do Brasil, com linguagem adequada ao nível, em tópicos 
 Responda SOMENTE JSON: {"titulo":"...","explicacao":"...","flashcards":[{"p":"...","r":"..."}]}`;
  const parts=[{text:prompt}];if(img)parts.push({inline_data:{mime_type:"image/jpeg",data:img}});
  try{
-  const ms=[...new Set([cfg.model,"gemini-2.5-flash","gemini-2.5-flash-lite"])];let d=null,le="";
+  const ms=[...new Set([cfg.model,"gemini-3.8-flash","gemini-flash-latest","gemini-flash-lite-latest"])];let d=null,le="";
   for(let t=0;t<2&&!d;t++){for(const m of ms){b.textContent="Estudando... ("+m.replace("gemini-","")+")";
    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":cfg.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:"application/json"}})});
    const j=await res.json();
    if(res.ok){d=j;break}
    le=j.error?.message||"Erro "+res.status;
-   if(![429,500,503].includes(res.status))throw new Error(le)}
+   if(![404,429,500,503].includes(res.status))throw new Error(le)}
    if(!d)await new Promise(r=>setTimeout(r,2500))}
-  if(!d)throw new Error("O Gemini está lotado agora. Espere um minuto e tente de novo.");
+  if(!d)throw new Error(le||"O Gemini está lotado agora. Espere um minuto e tente de novo.");
   const r=JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,"").trim());
   r.flashcards=(r.flashcards||[]).slice(0,10);
   show(r,$("out"));
