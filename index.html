@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#1f3a5f">
 <title>EstudoLife</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <style>
 :root{--bg:#f6f1e6;--sf:#fffdf7;--tx:#1d2733;--mt:#6b7480;--ac:#1f3a5f;--hl:#ffb627;--bd:#e3dac4;--ok:#2e7d5b}
 @media (prefers-color-scheme:dark){:root{--bg:#121a24;--sf:#1b2633;--tx:#eef1f5;--mt:#9aa5b3;--ac:#8fb4e8;--hl:#ffb627;--bd:#2c3a4b;--ok:#6fcf9f}}
@@ -130,15 +131,21 @@ Explique em português do Brasil, com linguagem adequada ao nível, em tópicos 
 Responda SOMENTE JSON: {"titulo":"...","explicacao":"...","flashcards":[{"p":"...","r":"..."}]}`;
  const parts=[{text:prompt}];if(img)parts.push({inline_data:{mime_type:"image/jpeg",data:img}});
  try{
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":cfg.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:"application/json"}})});
-  const d=await res.json();
-  if(!res.ok)throw new Error(d.error?.message||"Erro "+res.status);
+  const ms=[...new Set([cfg.model,"gemini-2.5-flash","gemini-2.5-flash-lite"])];let d=null,le="";
+  for(let t=0;t<2&&!d;t++){for(const m of ms){b.textContent="Estudando... ("+m.replace("gemini-","")+")";
+   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":cfg.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:"application/json"}})});
+   const j=await res.json();
+   if(res.ok){d=j;break}
+   le=j.error?.message||"Erro "+res.status;
+   if(![429,500,503].includes(res.status))throw new Error(le)}
+   if(!d)await new Promise(r=>setTimeout(r,2500))}
+  if(!d)throw new Error("O Gemini está lotado agora. Espere um minuto e tente de novo.");
   const r=JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,"").trim());
   r.flashcards=(r.flashcards||[]).slice(0,10);
   show(r,$("out"));
   hist.unshift({id:Date.now(),sub,lvl:cfg.lvl,titulo:r.titulo||q.slice(0,50)||"Foto",explicacao:r.explicacao,flashcards:r.flashcards});
   hist=hist.slice(0,60);sv("el_hist",hist);
- }catch(e){err.textContent="Não deu certo: "+e.message+". Confira a chave e a internet."}
+ }catch(e){err.textContent="Não deu certo: "+e.message}
  b.disabled=false;b.textContent="Explicar e criar flashcards";
 };
 function drawHist(){
@@ -150,6 +157,7 @@ function drawHist(){
   el.querySelector(".del").onclick=()=>{hist=hist.filter(i=>i.id!=id);sv("el_hist",hist);drawHist()}});
 }
 drawSettings();if(!cfg.key)tabs("set");
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
