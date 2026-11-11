@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f3a5f">
+<title>EstudoLife</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{--bg:#f6f1e6;--sf:#fffdf7;--tx:#1d2733;--mt:#6b7480;--ac:#1f3a5f;--hl:#ffb627;--bd:#e3dac4;--ok:#2e7d5b}
+@media (prefers-color-scheme:dark){:root{--bg:#121a24;--sf:#1b2633;--tx:#eef1f5;--mt:#9aa5b3;--ac:#8fb4e8;--hl:#ffb627;--bd:#2c3a4b;--ok:#6fcf9f}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.55 Georgia,"Times New Roman",serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+h1,h2,h3,button,select,label,.tab,.chip{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 18px 8px;display:flex;align-items:center;gap:10px}
+header img{width:34px;height:34px;border-radius:9px}
+header h1{font-size:20px;margin:0;color:var(--ac)}
+main{flex:1;overflow-y:auto;padding:6px 16px 24px}
+section{display:none}section.on{display:block}
+nav{display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0)}
+.tab{flex:1;padding:12px 4px;border:0;background:none;color:var(--mt);font-size:13px;font-weight:600}
+.tab.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--hl)}
+.tab span{display:block;font-size:20px}
+.box{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+label{display:block;font-size:13px;font-weight:600;color:var(--mt);margin:10px 0 4px}
+select,textarea,input[type=text],input[type=password]{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+textarea{min-height:96px;resize:vertical}
+button.p{width:100%;margin-top:12px;padding:14px;border:0;border-radius:12px;background:var(--ac);color:var(--bg);font-size:16px;font-weight:700}
+@media (prefers-color-scheme:dark){button.p{color:#0d1520}}
+button.p:disabled{opacity:.5}
+button.s{padding:10px 14px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:10px;font-size:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 13px;border:1px solid var(--bd);border-radius:20px;background:var(--sf);color:var(--tx);font-size:14px}
+.chip.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+@media (prefers-color-scheme:dark){.chip.on{color:#0d1520}}
+#prev{max-width:100%;max-height:160px;border-radius:10px;margin-top:8px;display:none}
+.ans p{margin:.5em 0}.ans ul{padding-left:20px;margin:.4em 0}
+.fc{perspective:800px;margin:10px 0;cursor:pointer}
+.fc div{min-height:96px;padding:16px;border-radius:14px;border:1px solid var(--bd);background:var(--sf);display:flex;align-items:center;justify-content:center;text-align:center}
+.fc.f div{background:var(--ok);color:#fff;border-color:var(--ok)}
+.fc small{display:block;color:var(--mt);font:12px system-ui;margin-bottom:6px}
+.fc.f small{color:#e8fff3}
+.hi{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.hi b{display:block;font-family:system-ui;font-size:15px}
+.hi small{color:var(--mt);font-family:system-ui}
+.err{color:#c0392b;font-family:system-ui;font-size:14px}
+.mt{color:var(--mt);font-size:14px}
+</style>
+</head>
+<body>
+<header><img src="icon.svg" alt=""><h1>EstudoLife</h1></header>
+<main>
+<section id="s-ask" class="on">
+ <div class="box">
+  <label for="subj">Matéria</label><select id="subj"></select>
+  <label for="q">Sua pergunta ou o assunto</label>
+  <textarea id="q" placeholder="Ex.: Explica a Revolução Francesa"></textarea>
+  <div class="row" style="margin-top:10px">
+   <button class="s" id="pbtn">📷 Foto da matéria</button><input type="file" id="file" accept="image/*" hidden>
+   <button class="s" id="pclr" hidden>Remover foto</button>
+  </div>
+  <img id="prev" alt="Foto enviada">
+  <button class="p" id="go">Explicar e criar flashcards</button>
+  <div id="err" class="err"></div>
+ </div>
+ <div id="out"></div>
+</section>
+<section id="s-hist"><div id="hist"></div></section>
+<section id="s-set">
+ <div class="box">
+  <label>Nível de ensino</label><select id="lvl"></select>
+  <label>Matérias que você estuda</label><div class="chips" id="subs"></div>
+ </div>
+ <div class="box">
+  <label for="key">Chave do Gemini (grátis)</label>
+  <input type="password" id="key" placeholder="Cole sua chave aqui" autocomplete="off">
+  <p class="mt">Crie de graça em aistudio.google.com/apikey. A chave fica só neste aparelho.</p>
+  <label for="mdl">Modelo</label><input type="text" id="mdl">
+ </div>
+ <div class="box"><button class="s" id="clr">Apagar histórico</button></div>
+</section>
+</main>
+<nav>
+ <button class="tab on" data-t="ask"><span>💡</span>Perguntar</button>
+ <button class="tab" data-t="hist"><span>🗂️</span>Histórico</button>
+ <button class="tab" data-t="set"><span>⚙️</span>Ajustes</button>
+</nav>
+<script>
+const LV=["Ensino Fundamental 1 (1º ao 5º ano)","Ensino Fundamental 2 (6º ao 9º ano)","Ensino Médio","Pré-vestibular / ENEM","Ensino Superior"];
+const ALL=["Português","Matemática","História","Geografia","Ciências","Biologia","Física","Química","Inglês","Filosofia","Sociologia","Redação","Artes"];
+const $=id=>document.getElementById(id);
+const ld=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let cfg=Object.assign({key:"",model:"gemini-flash-latest",lvl:2,subs:["Português","Matemática","História","Biologia"]},ld("el_cfg",{}));
+let hist=ld("el_hist",[]);let img=null;
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function md(t){const L=esc(t).split("\n");let h="",ul=false;for(const l of L){const m=l.match(/^\s*[-*•]\s+(.*)/);const x=(m?m[1]:l).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");if(m){if(!ul){h+="<ul>";ul=true}h+="<li>"+x+"</li>"}else{if(ul){h+="</ul>";ul=false}if(x.trim())h+="<p>"+x+"</p>"}}return h+(ul?"</ul>":"")}
+function tabs(t){document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id=="s-"+t));document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t==t));if(t=="hist")drawHist()}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>tabs(b.dataset.t));
+function drawSettings(){
+ $("lvl").innerHTML=LV.map((l,i)=>`<option value="${i}">${l}</option>`).join("");$("lvl").value=cfg.lvl;
+ $("subs").innerHTML=ALL.map(s=>`<button class="chip ${cfg.subs.includes(s)?"on":""}">${s}</button>`).join("");
+ $("subs").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const s=c.textContent;cfg.subs=cfg.subs.includes(s)?cfg.subs.filter(x=>x!=s):[...cfg.subs,s];save();drawSettings()});
+ $("key").value=cfg.key;$("mdl").value=cfg.model;
+ $("subj").innerHTML=(cfg.subs.length?cfg.subs:ALL).map(s=>`<option>${s}</option>`).join("")+"<option>Outra</option>";
+}
+function save(){sv("el_cfg",cfg)}
+$("lvl").onchange=e=>{cfg.lvl=+e.target.value;save()};
+$("key").onchange=e=>{cfg.key=e.target.value.trim();save()};
+$("mdl").onchange=e=>{cfg.model=e.target.value.trim()||"gemini-flash-latest";save()};
+$("clr").onclick=()=>{if(confirm("Apagar todo o histórico?")){hist=[];sv("el_hist",hist);drawHist()}};
+$("pbtn").onclick=()=>$("file").click();
+$("pclr").onclick=()=>{img=null;$("prev").style.display="none";$("pclr").hidden=true;$("file").value=""};
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);const u=c.toDataURL("image/jpeg",.82);img=u.split(",")[1];$("prev").src=u;$("prev").style.display="block";$("pclr").hidden=false};im.src=r.result};r.readAsDataURL(f)};
+function show(r,into){
+ into.innerHTML=`<div class="box ans">${md(r.explicacao)}</div><h3 style="margin:16px 2px 0">Flashcards</h3><p class="mt" style="margin:2px">Toque no cartão para ver a resposta.</p>`+r.flashcards.map((c,i)=>`<div class="fc"><div><span><small>Pergunta ${i+1}</small>${esc(c.p)}</span></div></div>`).join("");
+ into.querySelectorAll(".fc").forEach((el,i)=>el.onclick=()=>{const f=el.classList.toggle("f"),c=r.flashcards[i];el.firstElementChild.innerHTML=`<span><small>${f?"Resposta":"Pergunta "+(i+1)}</small>${esc(f?c.r:c.p)}</span>`});
+}
+$("go").onclick=async()=>{
+ const q=$("q").value.trim(),err=$("err");err.textContent="";
+ if(!cfg.key){err.textContent="Falta a chave do Gemini. Cadastre em Ajustes.";return}
+ if(!q&&!img){err.textContent="Escreva uma pergunta ou envie uma foto.";return}
+ const b=$("go");b.disabled=true;b.textContent="Estudando...";
+ const sub=$("subj").value;
+ const prompt=`Você é um professor paciente. Aluno de: ${LV[cfg.lvl]}. Matéria: ${sub}. ${q?"Pedido do aluno: "+q:"Explique o conteúdo da foto enviada."}
+Explique em português do Brasil, com linguagem adequada ao nível, em tópicos curtos, com exemplos. Use **negrito** nos termos-chave. Depois crie exatamente 10 flashcards (pergunta curta, resposta curta) para o aluno revisar para a prova.
+Responda SOMENTE JSON: {"titulo":"...","explicacao":"...","flashcards":[{"p":"...","r":"..."}]}`;
+ const parts=[{text:prompt}];if(img)parts.push({inline_data:{mime_type:"image/jpeg",data:img}});
+ try{
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":cfg.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:"application/json"}})});
+  const d=await res.json();
+  if(!res.ok)throw new Error(d.error?.message||"Erro "+res.status);
+  const r=JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,"").trim());
+  r.flashcards=(r.flashcards||[]).slice(0,10);
+  show(r,$("out"));
+  hist.unshift({id:Date.now(),sub,lvl:cfg.lvl,titulo:r.titulo||q.slice(0,50)||"Foto",explicacao:r.explicacao,flashcards:r.flashcards});
+  hist=hist.slice(0,60);sv("el_hist",hist);
+ }catch(e){err.textContent="Não deu certo: "+e.message+". Confira a chave e a internet."}
+ b.disabled=false;b.textContent="Explicar e criar flashcards";
+};
+function drawHist(){
+ const h=$("hist");
+ if(!hist.length){h.innerHTML='<div class="box mt">Nada por aqui ainda. Faça sua primeira pergunta na aba Perguntar.</div>';return}
+ h.innerHTML=hist.map(x=>`<div class="box hi" data-id="${x.id}"><div style="flex:1;cursor:pointer" class="op"><b>${esc(x.titulo)}</b><small>${esc(x.sub)} · ${new Date(x.id).toLocaleDateString("pt-BR")}</small></div><button class="s del">Apagar</button></div>`).join("");
+ h.querySelectorAll(".box").forEach(el=>{const id=+el.dataset.id;
+  el.querySelector(".op").onclick=()=>{const x=hist.find(i=>i.id==id);tabs("ask");show(x,$("out"));scrollTo(0,0)};
+  el.querySelector(".del").onclick=()=>{hist=hist.filter(i=>i.id!=id);sv("el_hist",hist);drawHist()}});
+}
+drawSettings();if(!cfg.key)tabs("set");
+</script>
+</body>
+</html>
